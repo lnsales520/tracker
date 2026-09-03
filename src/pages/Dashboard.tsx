@@ -413,8 +413,8 @@ export default function Dashboard() {
                 <Link to="/links/new" className="text-blue-600 font-medium hover:underline">Criar novo link</Link>
               </div>
             ) : (
-              <div className="bg-white rounded-lg border border-slate-200 overflow-visible shadow-sm">
-                <table className="w-full text-left border-collapse">
+              <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto shadow-sm">
+                <table className="w-full text-left border-collapse min-w-[600px]">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
                       <th className="py-3 px-4 font-medium rounded-tl-lg">Título / URL Original</th>
@@ -447,7 +447,7 @@ export default function Dashboard() {
                         </td>
                         <td className="py-3 px-4 text-right flex justify-end gap-2 relative">
                           <button
-                            onClick={() => setMovingLinkId(movingLinkId === link.id ? null : link.id)}
+                            onClick={() => setMovingLinkId(link.id)}
                             className="inline-flex items-center gap-1 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-3 rounded-md transition-colors"
                             title="Mover para pasta"
                           >
@@ -467,30 +467,6 @@ export default function Dashboard() {
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-
-                          {/* Menu flutuante de mover pasta */}
-                          {movingLinkId === link.id && (
-                            <div className="absolute right-0 top-12 w-48 bg-white border border-slate-200 rounded-md shadow-lg z-50 py-1 max-h-64 overflow-y-auto">
-                              <div className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 sticky top-0 bg-white">
-                                Mover para
-                              </div>
-                              <button 
-                                onClick={() => handleMoveLink(link.id, null)}
-                                className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 ${!link.project_id ? 'text-blue-600 font-medium' : 'text-slate-700'}`}
-                              >
-                                Sem Pasta
-                              </button>
-                              {projects.map(p => (
-                                <button 
-                                  key={p.id}
-                                  onClick={() => handleMoveLink(link.id, p.id)}
-                                  className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 truncate ${link.project_id === p.id ? 'text-blue-600 font-medium' : 'text-slate-700'}`}
-                                >
-                                  {p.name}
-                                </button>
-                              ))}
-                            </div>
-                          )}
                         </td>
                       </tr>
                     ))}
@@ -498,6 +474,40 @@ export default function Dashboard() {
                 </table>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Mover Pasta */}
+      {movingLinkId && (
+        <div className="fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="flex justify-between items-center p-4 border-b border-slate-200">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                <FolderInput className="w-5 h-5 text-blue-600" />
+                Mover para Pasta
+              </h3>
+              <button onClick={() => setMovingLinkId(null)} className="text-slate-400 hover:text-red-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-2 flex-1">
+              <button 
+                onClick={() => handleMoveLink(movingLinkId, null)}
+                className={`w-full text-left px-4 py-3 text-sm rounded-md hover:bg-slate-50 mb-1 ${!links.find(l => l.id === movingLinkId)?.project_id ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-700'}`}
+              >
+                Sem Pasta
+              </button>
+              {projects.map(p => (
+                <button 
+                  key={p.id}
+                  onClick={() => handleMoveLink(movingLinkId, p.id)}
+                  className={`w-full text-left px-4 py-3 text-sm rounded-md hover:bg-slate-50 mb-1 truncate ${links.find(l => l.id === movingLinkId)?.project_id === p.id ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-700'}`}
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

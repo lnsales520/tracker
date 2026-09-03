@@ -89,6 +89,8 @@ export default function Dashboard() {
       setNewFolderName('');
       setIsCreatingFolder(false);
       setSelectedProject(data.id);
+    } else if (error) {
+      alert('Erro ao criar pasta: ' + error.message);
     }
   };
 
@@ -99,6 +101,8 @@ export default function Dashboard() {
     if (!error) {
       setProjects(projects.map(p => p.id === editingFolderId ? { ...p, name: editFolderName.trim() } : p));
       setEditingFolderId(null);
+    } else {
+      alert('Erro ao renomear: ' + error.message);
     }
   };
 
@@ -110,6 +114,8 @@ export default function Dashboard() {
       if (selectedProject === id) setSelectedProject('all');
       // Atualiza localmente os links que perderam a pasta
       setLinks(links.map(l => l.project_id === id ? { ...l, project_id: null } : l));
+    } else {
+      alert('Erro ao excluir: ' + error.message);
     }
   };
 

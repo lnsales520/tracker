@@ -48,6 +48,8 @@ export default function NewLink() {
       setProjectId(data.id);
       setIsCreatingProject(false);
       setNewProjectName('');
+    } else if (error) {
+      alert('Erro ao salvar pasta: ' + error.message);
     }
   };
 
@@ -75,7 +77,7 @@ export default function NewLink() {
         if (insertError.code === '23505') { // Unique violation
           setError('Este código curto já está em uso. Tente outro.');
         } else {
-          setError('Erro ao criar o link. Verifique os dados.');
+          setError('Erro ao criar o link: ' + insertError.message);
         }
         setLoading(false);
         return;

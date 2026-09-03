@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 import { BarChart3, Copy, Check, Trash2, Folder } from 'lucide-react';
-import { format } from 'date-fns';
 
 type Project = {
   id: string;

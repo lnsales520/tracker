@@ -1,12 +1,9 @@
 {
   "rewrites": [
-    {
-      "source": "/r/:code",
-      "destination": "/api/redirect"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/links/(.*)", "destination": "/index.html" },
+    { "source": "/(favicon\\.svg|vite\\.svg|icons\\.svg)", "destination": "/$1" },
+    { "source": "/(.*)", "destination": "/api/redirect?code=$1" }
   ]
 }

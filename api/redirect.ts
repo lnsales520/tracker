@@ -42,7 +42,7 @@ export default async function handler(req, res) {
 
     // Registra o clique de forma assíncrona para não atrasar o redirecionamento
     // Numa Vercel Function, await é recomendado para garantir que a promessa conclua antes da função morrer
-    await supabase.from('clicks').insert([
+    const { error: insertError } = await supabase.from('clicks').insert([
       {
         link_id: link.id,
         country: country,
@@ -54,6 +54,10 @@ export default async function handler(req, res) {
         user_agent: userAgent
       }
     ]);
+    
+    if (insertError) {
+      console.error('Erro ao inserir clique:', insertError);
+    }
 
     // Redireciona para o destino
     return res.redirect(302, link.destination_url);

@@ -1,6 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+
+type Project = {
+  id: string;
+  name: string;
+};
 
 function generateRandomCode(length = 6) {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -19,6 +24,32 @@ export default function NewLink() {
   const [title, setTitle] = useState('');
   const [destinationUrl, setDestinationUrl] = useState('');
   const [shortCode, setShortCode] = useState('');
+  
+  // Projects
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectId, setProjectId] = useState<string>('');
+  const [newProjectName, setNewProjectName] = useState('');
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  async function fetchProjects() {
+    const { data } = await supabase.from('projects').select('*').order('name');
+    if (data) setProjects(data);
+  }
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) return;
+    const { data, error } = await supabase.from('projects').insert([{ name: newProjectName.trim() }]).select().single();
+    if (data && !error) {
+      setProjects([...projects, data]);
+      setProjectId(data.id);
+      setIsCreatingProject(false);
+      setNewProjectName('');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +66,8 @@ export default function NewLink() {
         {
           title: title || null,
           destination_url: destinationUrl,
-          short_code: finalCode
+          short_code: finalCode,
+          project_id: projectId || null
         }
       ]);
 
@@ -93,10 +125,48 @@ export default function NewLink() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Pasta / Projeto (Opcional)</label>
+            {isCreatingProject ? (
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Nome da nova pasta"
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  autoFocus
+                />
+                <button type="button" onClick={handleCreateProject} className="px-3 py-2 bg-slate-800 text-white rounded-md text-sm">Salvar</button>
+                <button type="button" onClick={() => setIsCreatingProject(false)} className="px-3 py-2 bg-slate-200 text-slate-700 rounded-md text-sm">Cancelar</button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <select 
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                >
+                  <option value="">Nenhuma pasta</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <button 
+                  type="button" 
+                  onClick={() => setIsCreatingProject(true)}
+                  className="px-3 py-2 border border-slate-300 bg-slate-50 hover:bg-slate-100 rounded-md text-sm font-medium text-slate-700 whitespace-nowrap"
+                >
+                  + Nova Pasta
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Código Curto Personalizado (Opcional)</label>
             <div className="flex">
               <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-slate-300 bg-slate-50 text-slate-500 text-sm">
-                seusite.com/r/
+                seusite.com/
               </span>
               <input 
                 type="text" 
@@ -106,7 +176,7 @@ export default function NewLink() {
                 onChange={(e) => setShortCode(e.target.value)}
               />
             </div>
-            <p className="mt-1 text-xs text-slate-500">Apenas letras e números são recomendados.</p>
+            <p className="mt-1 text-xs text-slate-500">Apenas letras e números são recomendados. Ex: promo24</p>
           </div>
 
           <div className="pt-4 flex justify-end gap-3">

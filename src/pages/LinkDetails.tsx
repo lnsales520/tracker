@@ -24,7 +24,6 @@ type ClickData = {
   created_at: string;
 };
 
-type TimeFilter = '7d' | '30d' | 'all';
 type Grouping = 'day' | 'week' | 'month';
 
 export default function LinkDetails() {
@@ -33,7 +32,14 @@ export default function LinkDetails() {
   const [clicks, setClicks] = useState<ClickData[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('30d');
+  // Custom Date Filters
+  const [startDate, setStartDate] = useState<string>(
+    format(subDays(new Date(), 30), 'yyyy-MM-dd')
+  );
+  const [endDate, setEndDate] = useState<string>(
+    format(new Date(), 'yyyy-MM-dd')
+  );
+  
   const [grouping, setGrouping] = useState<Grouping>('day');
 
   useEffect(() => {
@@ -63,13 +69,16 @@ export default function LinkDetails() {
     setLoading(false);
   }
 
-  // Filtragem de Tempo
+  // Filtragem de Tempo Customizada
   const filteredClicks = useMemo(() => {
-    if (timeFilter === 'all') return clicks;
-    const days = timeFilter === '7d' ? 7 : 30;
-    const cutoff = subDays(new Date(), days);
-    return clicks.filter(c => new Date(c.created_at) >= cutoff);
-  }, [clicks, timeFilter]);
+    if (!startDate || !endDate) return clicks;
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T23:59:59`);
+    return clicks.filter(c => {
+      const clickDate = new Date(c.created_at);
+      return clickDate >= start && clickDate <= end;
+    });
+  }, [clicks, startDate, endDate]);
 
   // Agrupamento para Gráfico de Linha (Cliques ao longo do tempo)
   const chartData = useMemo(() => {
@@ -137,10 +146,25 @@ export default function LinkDetails() {
       </div>
 
       <div className="bg-white p-4 rounded-lg border border-slate-200 flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex gap-2">
-          <button onClick={() => setTimeFilter('7d')} className={`px-3 py-1.5 rounded-md text-sm font-medium ${timeFilter === '7d' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Últimos 7 dias</button>
-          <button onClick={() => setTimeFilter('30d')} className={`px-3 py-1.5 rounded-md text-sm font-medium ${timeFilter === '30d' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Últimos 30 dias</button>
-          <button onClick={() => setTimeFilter('all')} className={`px-3 py-1.5 rounded-md text-sm font-medium ${timeFilter === 'all' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Todo o período</button>
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500 font-medium">De:</span>
+            <input 
+              type="date" 
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+              className="text-sm border border-slate-300 rounded-md py-1.5 px-2 outline-none focus:border-blue-500"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500 font-medium">Até:</span>
+            <input 
+              type="date" 
+              value={endDate}
+              onChange={e => setEndDate(e.target.value)}
+              className="text-sm border border-slate-300 rounded-md py-1.5 px-2 outline-none focus:border-blue-500"
+            />
+          </div>
         </div>
         
         <div className="flex gap-2 items-center">

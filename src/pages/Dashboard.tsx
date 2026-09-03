@@ -164,7 +164,12 @@ export default function Dashboard() {
                     value={newFolderName}
                     onChange={e => setNewFolderName(e.target.value)}
                   />
-                  <button type="button" onClick={() => setIsCreatingFolder(false)} className="text-slate-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+                  <button type="submit" className="text-green-600 hover:text-green-700" title="Salvar Pasta">
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button type="button" onClick={() => setIsCreatingFolder(false)} className="text-slate-400 hover:text-red-500" title="Cancelar">
+                    <X className="w-4 h-4" />
+                  </button>
                 </form>
               )}
 
@@ -178,8 +183,13 @@ export default function Dashboard() {
                         className="flex-1 min-w-0 px-1 py-0.5 text-sm border border-blue-300 rounded focus:outline-none"
                         value={editFolderName}
                         onChange={e => setEditFolderName(e.target.value)}
-                        onBlur={() => setEditingFolderId(null)}
                       />
+                      <button type="submit" className="text-green-600 hover:text-green-700" title="Salvar Novo Nome">
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button type="button" onClick={() => setEditingFolderId(null)} className="text-slate-400 hover:text-red-500" title="Cancelar">
+                        <X className="w-4 h-4" />
+                      </button>
                     </form>
                   ) : (
                     <>

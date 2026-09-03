@@ -413,14 +413,14 @@ export default function Dashboard() {
                 <Link to="/links/new" className="text-blue-600 font-medium hover:underline">Criar novo link</Link>
               </div>
             ) : (
-              <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+              <div className="bg-white rounded-lg border border-slate-200 overflow-visible shadow-sm">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
-                      <th className="py-3 px-4 font-medium">Título / URL Original</th>
+                      <th className="py-3 px-4 font-medium rounded-tl-lg">Título / URL Original</th>
                       <th className="py-3 px-4 font-medium">Link Curto</th>
                       <th className="py-3 px-4 font-medium">Cliques</th>
-                      <th className="py-3 px-4 font-medium text-right">Ações</th>
+                      <th className="py-3 px-4 font-medium text-right rounded-tr-lg">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -470,8 +470,8 @@ export default function Dashboard() {
 
                           {/* Menu flutuante de mover pasta */}
                           {movingLinkId === link.id && (
-                            <div className="absolute right-0 top-12 w-48 bg-white border border-slate-200 rounded-md shadow-lg z-10 py-1">
-                              <div className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                            <div className="absolute right-0 top-12 w-48 bg-white border border-slate-200 rounded-md shadow-lg z-50 py-1 max-h-64 overflow-y-auto">
+                              <div className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 sticky top-0 bg-white">
                                 Mover para
                               </div>
                               <button 

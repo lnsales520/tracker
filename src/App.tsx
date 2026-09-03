@@ -6,7 +6,7 @@ import NewLink from './pages/NewLink';
 import LinkDetails from './pages/LinkDetails';
 import Login from './pages/Login';
 import { Link2, LogOut } from 'lucide-react';
-import { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);

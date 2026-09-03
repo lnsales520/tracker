@@ -34,14 +34,30 @@ export default async function handler(req, res) {
     const userAgent = req.headers['user-agent'] || 'Desconhecido';
     const referrer = req.headers['referer'] || 'Direto';
 
-    // Para capturar UTMs, idealmente pegaríamos da URL da requisição se estivesse lá.
-    // Como a rota é algo como /r/abc123?utm_source=facebook
-    const utm_source = req.query.utm_source || null;
-    const utm_medium = req.query.utm_medium || null;
-    const utm_campaign = req.query.utm_campaign || null;
+    // Tenta fazer o parse da URL de destino para pegar UTMs "presas" nela (hardcoded)
+    let destUrlObj;
+    let finalDestination = link.destination_url;
+    try {
+      destUrlObj = new URL(link.destination_url);
+    } catch (e) {
+      // Ignora erro de parsing
+    }
 
-    // Registra o clique de forma assíncrona para não atrasar o redirecionamento
-    // Numa Vercel Function, await é recomendado para garantir que a promessa conclua antes da função morrer
+    // Para capturar UTMs: Prioridade 1 (URL encurtada) -> Prioridade 2 (URL de destino)
+    const utm_source = req.query.utm_source || (destUrlObj ? destUrlObj.searchParams.get('utm_source') : null) || null;
+    const utm_medium = req.query.utm_medium || (destUrlObj ? destUrlObj.searchParams.get('utm_medium') : null) || null;
+    const utm_campaign = req.query.utm_campaign || (destUrlObj ? destUrlObj.searchParams.get('utm_campaign') : null) || null;
+
+    // Se o usuário acessar o link encurtado com UTMs extras (ex: /V001?utm_source=insta),
+    // vamos repassar isso para a URL final para que o Google Analytics do destino também registre
+    if (destUrlObj) {
+      if (req.query.utm_source) destUrlObj.searchParams.set('utm_source', req.query.utm_source);
+      if (req.query.utm_medium) destUrlObj.searchParams.set('utm_medium', req.query.utm_medium);
+      if (req.query.utm_campaign) destUrlObj.searchParams.set('utm_campaign', req.query.utm_campaign);
+      finalDestination = destUrlObj.toString();
+    }
+
+    // Registra o clique
     const { error: insertError } = await supabase.from('clicks').insert([
       {
         link_id: link.id,
@@ -59,8 +75,8 @@ export default async function handler(req, res) {
       console.error('Erro ao inserir clique:', insertError);
     }
 
-    // Redireciona para o destino
-    return res.redirect(302, link.destination_url);
+    // Redireciona para o destino (agora podendo incluir UTMs extras repassadas)
+    return res.redirect(302, finalDestination);
 
   } catch (err) {
     console.error(err);

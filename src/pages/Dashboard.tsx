@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
-import { BarChart3, Copy, Check, Trash2, Folder } from 'lucide-react';
+import { BarChart3, Copy, Check, Trash2, Folder, Plus, Edit2, X } from 'lucide-react';
 
 type Project = {
   id: string;
@@ -26,6 +26,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
 
+  // Folder Management State
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+  const [editFolderName, setEditFolderName] = useState('');
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -33,15 +39,10 @@ export default function Dashboard() {
   async function fetchData() {
     setLoading(true);
     
-    // Fetch Projects
     const { data: projectsData } = await supabase.from('projects').select('*').order('created_at', { ascending: true });
     if (projectsData) setProjects(projectsData);
 
-    // Fetch Links
-    const { data: linksData, error: linksError } = await supabase
-      .from('links')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data: linksData, error: linksError } = await supabase.from('links').select('*').order('created_at', { ascending: false });
 
     if (linksError || !linksData) {
       console.error(linksError);
@@ -49,7 +50,6 @@ export default function Dashboard() {
       return;
     }
 
-    // Fetch Click counts
     const { data: clicksData } = await supabase.from('clicks').select('link_id');
     const clickCounts = (clicksData || []).reduce((acc: any, click) => {
       acc[click.link_id] = (acc[click.link_id] || 0) + 1;
@@ -65,28 +65,59 @@ export default function Dashboard() {
     setLoading(false);
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteLink = async (id: string) => {
     if (!window.confirm('Tem certeza que deseja excluir este link e todos os seus cliques?')) return;
-    
     const { error } = await supabase.from('links').delete().eq('id', id);
-    if (!error) {
-      setLinks(links.filter(l => l.id !== id));
-    } else {
-      alert('Erro ao excluir o link.');
-    }
+    if (!error) setLinks(links.filter(l => l.id !== id));
+    else alert('Erro ao excluir o link.');
   };
 
   const handleCopy = (code: string) => {
-    // Removemos o /r/ do código gerado
     const url = `${window.location.origin}/${code}`;
     navigator.clipboard.writeText(url);
     setCopied(code);
     setTimeout(() => setCopied(null), 2000);
   };
 
+  // Folder Management Functions
+  const handleCreateFolder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFolderName.trim()) return;
+    const { data, error } = await supabase.from('projects').insert([{ name: newFolderName.trim() }]).select().single();
+    if (data && !error) {
+      setProjects([...projects, data]);
+      setNewFolderName('');
+      setIsCreatingFolder(false);
+      setSelectedProject(data.id);
+    }
+  };
+
+  const handleRenameFolder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editFolderName.trim() || !editingFolderId) return;
+    const { error } = await supabase.from('projects').update({ name: editFolderName.trim() }).eq('id', editingFolderId);
+    if (!error) {
+      setProjects(projects.map(p => p.id === editingFolderId ? { ...p, name: editFolderName.trim() } : p));
+      setEditingFolderId(null);
+    }
+  };
+
+  const handleDeleteFolder = async (id: string, name: string) => {
+    if (!window.confirm(`Excluir a pasta "${name}"? Os links dela não serão apagados, ficarão "Sem Pasta".`)) return;
+    const { error } = await supabase.from('projects').delete().eq('id', id);
+    if (!error) {
+      setProjects(projects.filter(p => p.id !== id));
+      if (selectedProject === id) setSelectedProject('all');
+      // Atualiza localmente os links que perderam a pasta
+      setLinks(links.map(l => l.project_id === id ? { ...l, project_id: null } : l));
+    }
+  };
+
   const filteredLinks = selectedProject === 'all' 
     ? links 
-    : links.filter(l => l.project_id === selectedProject);
+    : selectedProject === 'none'
+      ? links.filter(l => !l.project_id)
+      : links.filter(l => l.project_id === selectedProject);
 
   if (loading) {
     return <div className="text-center py-10">Carregando dados...</div>;
@@ -95,14 +126,20 @@ export default function Dashboard() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Seus Links</h1>
+        <h1 className="text-2xl font-bold text-slate-800">Painel Geral</h1>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Sidebar de Projetos */}
         <div className="w-full md:w-64 shrink-0">
           <div className="bg-white rounded-lg border border-slate-200 p-4">
-            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Pastas / Projetos</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Pastas</h2>
+              <button onClick={() => setIsCreatingFolder(true)} className="text-blue-600 hover:text-blue-700" title="Nova Pasta">
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            
             <div className="space-y-1">
               <button 
                 onClick={() => setSelectedProject('all')}
@@ -110,15 +147,48 @@ export default function Dashboard() {
               >
                 <Folder className="w-4 h-4" /> Todos os Links
               </button>
+
+              {isCreatingFolder && (
+                <form onSubmit={handleCreateFolder} className="flex items-center gap-2 px-2 py-1">
+                  <input 
+                    type="text" 
+                    autoFocus
+                    placeholder="Nome da pasta..."
+                    className="flex-1 min-w-0 px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:border-blue-500"
+                    value={newFolderName}
+                    onChange={e => setNewFolderName(e.target.value)}
+                  />
+                  <button type="button" onClick={() => setIsCreatingFolder(false)} className="text-slate-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+                </form>
+              )}
+
               {projects.map(proj => (
-                <button 
-                  key={proj.id}
-                  onClick={() => setSelectedProject(proj.id)}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${selectedProject === proj.id ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-100'}`}
-                >
-                  <Folder className="w-4 h-4" /> {proj.name}
-                </button>
+                <div key={proj.id} className={`group flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium ${selectedProject === proj.id ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-100'}`}>
+                  {editingFolderId === proj.id ? (
+                    <form onSubmit={handleRenameFolder} className="flex-1 flex items-center gap-2">
+                      <input 
+                        type="text" 
+                        autoFocus
+                        className="flex-1 min-w-0 px-1 py-0.5 text-sm border border-blue-300 rounded focus:outline-none"
+                        value={editFolderName}
+                        onChange={e => setEditFolderName(e.target.value)}
+                        onBlur={() => setEditingFolderId(null)}
+                      />
+                    </form>
+                  ) : (
+                    <>
+                      <button onClick={() => setSelectedProject(proj.id)} className="flex-1 flex items-center gap-2 text-left truncate pr-2">
+                        <Folder className="w-4 h-4 shrink-0" /> <span className="truncate">{proj.name}</span>
+                      </button>
+                      <div className="hidden group-hover:flex items-center gap-1 shrink-0">
+                        <button onClick={() => { setEditingFolderId(proj.id); setEditFolderName(proj.name); }} className="p-1 text-slate-400 hover:text-blue-600"><Edit2 className="w-3 h-3" /></button>
+                        <button onClick={() => handleDeleteFolder(proj.id, proj.name)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-3 h-3" /></button>
+                      </div>
+                    </>
+                  )}
+                </div>
               ))}
+              
               <button 
                 onClick={() => setSelectedProject('none')}
                 className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${selectedProject === 'none' ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-100'}`}
@@ -156,7 +226,6 @@ export default function Dashboard() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          {/* Exibição atualizada sem o /r/ */}
                           <span className="font-medium text-blue-600">/{link.short_code}</span>
                           <button 
                             onClick={() => handleCopy(link.short_code)}
@@ -176,10 +245,10 @@ export default function Dashboard() {
                           className="inline-flex items-center gap-1 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-3 rounded-md transition-colors"
                         >
                           <BarChart3 className="w-4 h-4" />
-                          Estatísticas
+                          <span className="hidden sm:inline">Estatísticas</span>
                         </Link>
                         <button 
-                          onClick={() => handleDelete(link.id)}
+                          onClick={() => handleDeleteLink(link.id)}
                           className="inline-flex items-center gap-1 text-sm bg-red-50 hover:bg-red-100 text-red-600 py-1.5 px-3 rounded-md transition-colors"
                           title="Excluir link"
                         >

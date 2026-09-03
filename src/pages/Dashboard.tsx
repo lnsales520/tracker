@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
-import { BarChart3, ExternalLink, Copy, Check } from 'lucide-react';
+import { BarChart3, Copy, Check } from 'lucide-react';
 import { format } from 'date-fns';
 
 type LinkData = {
@@ -39,7 +39,7 @@ export default function Dashboard() {
     }
 
     // Busca contagem de cliques (Ideal seria uma view no Supabase, mas para simplicidade fazemos aqui)
-    const { data: clicksData, error: clicksError } = await supabase
+    const { data: clicksData } = await supabase
       .from('clicks')
       .select('link_id');
 

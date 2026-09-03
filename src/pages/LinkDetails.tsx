@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ArrowLeft, ExternalLink, Calendar, MapPin, Target } from 'lucide-react';
 import { format, subDays, startOfDay, startOfWeek, startOfMonth } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 type LinkInfo = {

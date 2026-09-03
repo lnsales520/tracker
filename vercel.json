@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/r/:code",
+      "destination": "/api/redirect"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

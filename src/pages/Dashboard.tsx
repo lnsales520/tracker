@@ -68,11 +68,26 @@ export default function Dashboard() {
       return;
     }
 
-    // Busca todos os cliques para o Dashboard Global
-    const { data: clicksData } = await supabase.from('clicks').select('id, link_id, country, utm_source, created_at').limit(50000);
-    if (clicksData) setClicks(clicksData);
+    // Busca todos os cliques para o Dashboard Global usando paginação para driblar o limite de 1000 do Supabase
+    let allClicks: any[] = [];
+    let page = 0;
+    while (true) {
+      const { data } = await supabase
+        .from('clicks')
+        .select('id, link_id, country, utm_source, created_at')
+        .range(page * 1000, (page + 1) * 1000 - 1);
+        
+      if (data && data.length > 0) {
+        allClicks = [...allClicks, ...data];
+        if (data.length < 1000) break;
+        page++;
+      } else {
+        break;
+      }
+    }
+    setClicks(allClicks);
 
-    const clickCounts = (clicksData || []).reduce((acc: any, click) => {
+    const clickCounts = allClicks.reduce((acc: any, click) => {
       acc[click.link_id] = (acc[click.link_id] || 0) + 1;
       return acc;
     }, {});

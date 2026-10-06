@@ -59,14 +59,26 @@ export default function LinkDetails() {
       
     if (linkData) setLink(linkData);
 
-    const { data: clicksData } = await supabase
-      .from('clicks')
-      .select('*')
-      .eq('link_id', id)
-      .order('created_at', { ascending: true })
-      .limit(50000);
+    let allClicks: any[] = [];
+    let page = 0;
+    while (true) {
+      const { data } = await supabase
+        .from('clicks')
+        .select('*')
+        .eq('link_id', id)
+        .order('created_at', { ascending: true })
+        .range(page * 1000, (page + 1) * 1000 - 1);
 
-    if (clicksData) setClicks(clicksData);
+      if (data && data.length > 0) {
+        allClicks = [...allClicks, ...data];
+        if (data.length < 1000) break;
+        page++;
+      } else {
+        break;
+      }
+    }
+
+    setClicks(allClicks);
     setLoading(false);
   }
 

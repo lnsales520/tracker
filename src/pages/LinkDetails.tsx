@@ -136,10 +136,15 @@ export default function LinkDetails() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-800">{link.title || 'Sem título'}</h1>
-          <a href={link.destination_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 hover:underline mt-1">
-            {link.destination_url}
-            <ExternalLink className="w-3 h-3" />
-          </a>
+          <div className="flex items-center gap-4 mt-1">
+            <a href={link.destination_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
+              {link.destination_url}
+              <ExternalLink className="w-3 h-3" />
+            </a>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-medium border border-slate-200">
+              Total Histórico: {clicks.length} cliques
+            </span>
+          </div>
         </div>
       </div>
 

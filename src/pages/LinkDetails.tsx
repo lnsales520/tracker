@@ -72,11 +72,9 @@ export default function LinkDetails() {
   // Filtragem de Tempo Customizada
   const filteredClicks = useMemo(() => {
     if (!startDate || !endDate) return clicks;
-    const start = new Date(`${startDate}T00:00:00`);
-    const end = new Date(`${endDate}T23:59:59`);
     return clicks.filter(c => {
-      const clickDate = new Date(c.created_at);
-      return clickDate >= start && clickDate <= end;
+      const clickDateStr = format(new Date(c.created_at), 'yyyy-MM-dd');
+      return clickDateStr >= startDate && clickDateStr <= endDate;
     });
   }, [clicks, startDate, endDate]);
 

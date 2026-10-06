@@ -69,7 +69,7 @@ export default function Dashboard() {
     }
 
     // Busca todos os cliques para o Dashboard Global
-    const { data: clicksData } = await supabase.from('clicks').select('id, link_id, country, utm_source, created_at');
+    const { data: clicksData } = await supabase.from('clicks').select('id, link_id, country, utm_source, created_at').limit(50000);
     if (clicksData) setClicks(clicksData);
 
     const clickCounts = (clicksData || []).reduce((acc: any, click) => {

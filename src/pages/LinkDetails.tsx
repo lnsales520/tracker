@@ -63,7 +63,8 @@ export default function LinkDetails() {
       .from('clicks')
       .select('*')
       .eq('link_id', id)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .limit(50000);
 
     if (clicksData) setClicks(clicksData);
     setLoading(false);
